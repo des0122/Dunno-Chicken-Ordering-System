@@ -143,7 +143,12 @@ body{
   background:white;
   width:100%;
   padding:20px;
+  padding-bottom:100px;
+
   border-radius:20px 20px 0 0;
+
+  max-height:90vh;
+  overflow-y:auto;
 }
 
 /* flavour */
@@ -582,15 +587,6 @@ body{
 <div class="modal" id="checkoutModal">
   <div class="modal-content" id="sheet">
 
-    <!-- drag indicator -->
-    <div style="
-      width:40px;
-      height:5px;
-      background:#ccc;
-      border-radius:10px;
-      margin:0 auto 16px;
-    "></div>
-
     <h2 style="margin-bottom:16px;">🧾 Your Order</h2>
 
     <div id="orderList"></div>
@@ -925,26 +921,7 @@ btn.disabled = false;
   checkoutModal.classList.remove("show");
 }
 
-  let sheet = null;
 
-window.addEventListener("load", () => {
-  sheet = document.getElementById("sheet");
-
-  let startY=0;
-
-  sheet.addEventListener("touchstart",(e)=>{
-    startY = e.touches[0].clientY;
-  });
-
-  sheet.addEventListener("touchmove",(e)=>{
-    let currentY = e.touches[0].clientY;
-    let diff = currentY - startY;
-
-    if(diff > 100){
-      closeCheckout();
-    }
-  });
-});
 
   // ===== enable submit only when receipt uploaded =====
 document.getElementById("receipt").addEventListener("change", function(){
@@ -1014,10 +991,7 @@ document.getElementById("receipt").addEventListener("change", function(){
 
   document.getElementById("address").addEventListener("input", renderOrder);
 
-  
-  function openCombo(){
-  document.getElementById("comboModal").classList.add("show");
-}
+
 
 </script>
 
