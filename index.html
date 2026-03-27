@@ -706,7 +706,14 @@ let mode="delivery";
 let order=[];
 
 function setMode(m){
+
+  let deliveryBtn = document.getElementById("deliveryBtn");
+  let pickupBtn = document.getElementById("pickupBtn");
+  let deliveryOptions = document.getElementById("deliveryOptions");
+
   mode = m;
+
+  console.log("mode changed to:", mode);
 
   deliveryBtn.classList.toggle("active", m==="delivery");
   pickupBtn.classList.toggle("active", m==="pickup");
@@ -723,7 +730,9 @@ function setMode(m){
   
 
 function add(name,price){
-  let f = order.find(i=>i.name===name);
+  if(!order) order = [];
+
+let f = order.find(i=>i.name===name);
   if(f) f.qty++;
   else order.push({name,price,qty:1});
 
@@ -816,7 +825,7 @@ function renderOrder(){
   });
 
   let deliveryFee=0;
-  if(mode==="delivery"){
+  if(mode=="delivery"){
     deliveryFee = document.getElementById("delivery").value==="usm"?2:3;
   }
 
@@ -847,52 +856,53 @@ function submitOrder(){
   let btn = document.getElementById("submitBtn");
   let receipt = document.getElementById("receipt");
 
-  if(mode==="delivery"){
-    let addr = document.getElementById("address").value.trim();
-    if(addr===""){
-      alert("Please enter your address");
-      return;
-    }
+  let realMode = document.getElementById("deliveryBtn").classList.contains("active")
+  ? "delivery"
+  : "pickup";
+
+if(realMode=== "delivery"){
+  let addr = document.getElementById("address").value.trim();
+  if(addr===""){
+    alert("Please enter your address");
+    return;
   }
+}
 
   if(receipt.files.length === 0){
     alert("Please upload receipt");
     return;
   }
 
-   btn = document.getElementById("submitBtn");
-
 // loading state
+btn.disabled = true;
 btn.classList.add("loading");
 btn.innerHTML = '<span class="spinner"></span> Processing';
 
   let orderNumber = "DUNNO-" + Date.now();
   localStorage.setItem("currentOrder", orderNumber);
 
-  fetch("https://script.google.com/macros/s/AKfycbzl9COfgZxa0DoTKkoaeFrkIZ5cYmBHvEIrKBBupFt8kpmKNz3s5klFDOPYJnNIWKAzRA/exec", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({
-      action:"createOrder",
-      orderNumber:orderNumber,
-      items:order,
-      total: document.getElementById("total").innerText.replace("RM ",""),
-      mode: mode,
-      deliveryArea: document.getElementById("delivery").value,
-      address: document.getElementById("address").value
-    })
-  })
-  .then(res=>res.json())
-  .then(()=>{
+ let url = "https://script.google.com/macros/s/AKfycbzl9COfgZxa0DoTKkoaeFrkIZ5cYmBHvEIrKBBupFt8kpmKNz3s5klFDOPYJnNIWKAzRA/exec";
 
-  // ✅ success animation
+let params = new URLSearchParams({
+  action: "createOrder",
+  orderNumber: orderNumber,
+  items: JSON.stringify(order),
+  total: document.getElementById("total").innerText.replace("RM ",""),
+  mode: document.getElementById("deliveryBtn").classList.contains("active")
+    ? "delivery"
+    : "pickup",
+  deliveryArea: document.getElementById("delivery").value,
+  address: document.getElementById("address").value
+});
+
+fetch(url + "?" + params.toString())
+.then(res => res.json())
+.then(data => {
+
   btn.classList.remove("loading");
   btn.classList.add("success");
   btn.innerHTML = "✔ Payment Received";
 
-  // 👉 原本你的逻辑继续（不要删）
   startTracking(orderNumber);
 
   order = [];
@@ -902,7 +912,6 @@ btn.innerHTML = '<span class="spinner"></span> Processing';
   document.getElementById("receipt").value = "";
   document.getElementById("address").value = "";
 
-  // ⏳ 1秒后恢复按钮
   setTimeout(()=>{
     btn.classList.remove("success");
     btn.innerHTML = "Submit";
@@ -910,11 +919,11 @@ btn.innerHTML = '<span class="spinner"></span> Processing';
   },1200);
 
 })
-  .catch(()=>{
-    btn.classList.remove("loading");
-btn.innerHTML = "Try Again";
-btn.disabled = false;
-  })
+.catch(()=>{
+  btn.classList.remove("loading");
+  btn.innerHTML = "Try Again";
+  btn.disabled = false;
+})
 } 
   
   function closeCheckout(){
@@ -945,11 +954,13 @@ document.getElementById("receipt").addEventListener("change", function(){
 
   let interval = setInterval(()=>{
 
-    fetch("https://script.google.com/macros/s/AKfycbzl9COfgZxa0DoTKkoaeFrkIZ5cYmBHvEIrKBBupFt8kpmKNz3s5klFDOPYJnNIWKAzRA/exec")
+    fetch("https://script.google.com/macros/s/AKfycbzl9COfgZxa0DoTKkoaeFrkIZ5cYmBHvEIrKBBupFt8kpmKNz3s5klFDOPYJnNIWKAzRA/exec?action=orders")
       .then(res=>res.json())
       .then(data=>{
 
-        let found = data.orders.find(o => o.orderNumber === orderNumber);
+        if(!data || !data.orders) return;
+
+let found = data.orders.find(o => o.orderNumber === orderNumber);
         if(!found) return;
 
         let status = found.orderStatus;
@@ -973,8 +984,11 @@ document.getElementById("receipt").addEventListener("change", function(){
           clearInterval(interval);
 }
 
-        document.getElementById("statusText").innerText = text;
-        document.getElementById("etaText").innerText = eta;
+        let s = document.getElementById("statusText");
+let e = document.getElementById("etaText");
+
+if(s) s.innerText = text;
+if(e) e.innerText = eta;
 
       });
 
