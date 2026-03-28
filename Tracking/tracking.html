@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<body style="
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:#fff7f3;
+">
+
+<div style="
+  background:#d60000;
+  color:white;
+  padding:20px;
+  border-radius:0 0 24px 24px;
+  text-align:center;
+  font-weight:600;
+">
+  🍗 Dunno Chicken  
+<div style="font-size:13px;opacity:0.85;margin-top:4px;">
+  Frying your chicken fresh 🔥
+</div>
+</div>
+
+<div style="
+  max-width:420px;
+  margin:20px auto;
+  background:white;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 10px 30px rgba(214,0,0,0.08);
+">
+
+<style>
+.step{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#ddd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+}
+
+.step.active{
+  background:#22c55e;
+  color:white;
+}
+
+.line{
+  flex:1;
+  height:3px;
+  background:#ddd;
+}
+
+.line.active{
+  background:#22c55e;
+}
+
+.step.active{
+  background:linear-gradient(135deg,#f59e0b,#d60000);
+  color:white;
+}
+
+.line.active{
+  background:#f59e0b;
+}
+
+@keyframes pulse{
+  0%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.2);opacity:0.7;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+.step.active{
+  animation:pulse 1.2s infinite;
+}
+
+</style>
+
+
+<h2 id="status" style="
+  font-size:26px;
+  font-weight:700;
+  margin-top:20px;
+">
+  Loading...
+</h2>
+
+<div id="progress" style="margin-top:30px;">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    
+    <div class="step" id="step1">●</div>
+    <div class="line" id="line1"></div>
+
+    <div class="step" id="step2">●</div>
+    <div class="line" id="line2"></div>
+
+    <div class="step" id="step3">●</div>
+    <div class="line" id="line3"></div>
+
+    <div class="step" id="step4">●</div>
+
+  </div>
+
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px;">
+    <span>Queue</span>
+    <span>Prep</span>
+    <span>Cook</span>
+    <span>Ready</span>
+  </div>
+
+</div>
+<div id="eta"></div>
+
+<script>
+
+let params = new URLSearchParams(window.location.search);
+let orderNumber = params.get("order") || localStorage.getItem("currentOrder");
+
+function startTracking(){
+
+  setInterval(()=>{
+
+    fetch("https://script.google.com/macros/s/AKfycbzl9COfgZxa0DoTKkoaeFrkIZ5cYmBHvEIrKBBupFt8kpmKNz3s5klFDOPYJnNIWKAzRA/exec?action=orders")
+      .then(res=>res.json())
+      .then(data=>{
+
+        let found = data.orders.find(o => String(o.orderNumber) === String(orderNumber));
+        if(!found) return;
+
+        let status = found.orderStatus;
+
+        function updateProgress(stage){
+
+  const steps = [
+    document.getElementById("step1"),
+    document.getElementById("step2"),
+    document.getElementById("step3"),
+    document.getElementById("step4")
+  ];
+
+  const lines = [
+    document.getElementById("line1"),
+    document.getElementById("line2"),
+    document.getElementById("line3")
+  ];
+
+  // reset
+  steps.forEach(s => s.classList.remove("active"));
+  lines.forEach(l => l.classList.remove("active"));
+
+  // activate
+  for(let i=0;i<=stage;i++){
+    if(steps[i]) steps[i].classList.add("active");
+    if(lines[i-1]) lines[i-1].classList.add("active");
+  }
+}
+
+        let text = "";
+       if(status==="Pending"){
+  text="Queued 🍟";
+  updateProgress(0);
+}
+else if(status==="Cooking"){
+
+  let created = new Date(found.createdAt || (Date.now()-60000)).getTime();
+  let elapsed = (Date.now() - created)/1000;
+
+  if(elapsed < 60){
+    text="Preparing 👨‍🍳";
+    updateProgress(1);
+  } else {
+    text="Cooking 🔥🔥🔥";
+    updateProgress(2);
+  }
+}
+else if(status==="Ready"){
+  text="🔥 Ready to Eat! 🍗";
+  updateProgress(3);
+
+  document.body.style.background = "#fff"; // 提亮
+
+  let card = document.querySelector("div[style*='max-width']");
+  if(card){
+    card.style.transform = "scale(1.03)";
+    card.style.boxShadow = "0 20px 40px rgba(0,0,0,0.15)";
+  }
+}
+
+        document.getElementById("status").innerText = text;
+
+
+      });
+
+  },4000);
+}
+
+
+startTracking();
+
+</script>
+
+</body>
+</html>
