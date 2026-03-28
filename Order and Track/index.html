@@ -903,7 +903,7 @@ fetch(url + "?" + params.toString())
   btn.classList.add("success");
   btn.innerHTML = "✔ Payment Received";
 
-  window.location.href = "/Tracking/tracking.html?order=" + orderNumber;
+  window.location.href = "/tracking.html?order=" + orderNumber;
 
   order = [];
   updateCart();
@@ -1013,6 +1013,7 @@ let e = document.getElementById("etaText");
 if(s) s.innerText = text;
 if(e) e.innerText = eta;
 
+
       });
 
   },4000);
@@ -1027,8 +1028,9 @@ if(e) e.innerText = eta;
 }
 
   document.getElementById("address").addEventListener("input", renderOrder);
+ 
 
-
+  
 </script>
 
 </body>
