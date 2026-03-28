@@ -6,28 +6,103 @@
   background:#fff7f3;
 ">
 
-<div style="
-  background:#d60000;
-  color:white;
-  padding:20px;
-  border-radius:0 0 24px 24px;
-  text-align:center;
-  font-weight:600;
+<div class="wrap">
+
+  <!-- HERO -->
+  <div style="position:relative;">
+    <div style="
+      height:180px;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,0.35), transparent),
+        url('/images/original.jpg') center/cover;
+    "></div>
+
+    <div style="
+      position:relative;
+      margin-top:-60px;
+      background:white;
+      border-radius:20px;
+      padding:16px;
+      margin-left:12px;
+      margin-right:12px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      box-shadow:0 4px 20px rgba(0,0,0,0.1);
+    ">
+
+      <img src="/images/logo.png" style="
+        width:60px;
+        height:60px;
+        border-radius:16px;
+      ">
+
+      <div>
+        <div style="font-weight:bold;font-size:18px;">
+          Dunno Chicken USM | Lot K Uptown Mall
+        </div>
+
+        <div style="color:#666;font-size:13px;">
+          Karagee Specialist · Halal ✅
+        </div>
+
+        <div style="color:#f59e0b;font-size:13px;margin-top:4px;">
+          ⭐ 4.9
+        </div>
+
+        <div style="color:#333;font-size:13px;margin-top:4px;">
+          🚚 From 10–15 mins
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TRACKING CARD -->
+  <div class="card" style="margin-top:14px;">
+
+    <h2 id="status" style="
+      font-size:26px;
+      font-weight:700;
+      margin-top:10px;
+    ">
+      Loading...
+    </h2>
+
+    <div id="progress" style="margin-top:30px;">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="step" id="step1">●</div>
+        <div class="line" id="line1"></div>
+
+        <div class="step" id="step2">●</div>
+        <div class="line" id="line2"></div>
+
+        <div class="step" id="step3">●</div>
+        <div class="line" id="line3"></div>
+
+        <div class="step" id="step4">●</div>
+      </div>
+
+      <div id="eta" style="
+  margin-top:18px;
+  font-size:14px;
+  color:#555;
 ">
-  🍗 Dunno Chicken  
-<div style="font-size:13px;opacity:0.85;margin-top:4px;">
-  Frying your chicken fresh 🔥
-</div>
 </div>
 
-<div style="
-  max-width:420px;
-  margin:20px auto;
-  background:white;
-  border-radius:20px;
-  padding:24px;
-  box-shadow:0 10px 30px rgba(214,0,0,0.08);
-">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px;">
+        <span>Queue</span>
+        <span>Prep</span>
+        <span>Cook</span>
+        <span>Ready</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
 <style>
 .step{
@@ -44,6 +119,13 @@
 .step.active{
   background:#22c55e;
   color:white;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(214,0,0,0.08);
 }
 
 .line{
@@ -71,49 +153,28 @@
   100%{transform:scale(1);opacity:1;}
 }
 
-.step.active{
+.step.current{
   animation:pulse 1.2s infinite;
+}
+
+.wrap{
+  max-width:600px;
+  margin:auto;
+  padding:16px;
+  padding-bottom:120px;
+}
+
+#progress{
+  margin-top:24px;
 }
 
 </style>
 
 
-<h2 id="status" style="
-  font-size:26px;
-  font-weight:700;
-  margin-top:20px;
-">
-  Loading...
-</h2>
-
-<div id="progress" style="margin-top:30px;">
-
-  <div style="display:flex;justify-content:space-between;align-items:center;">
-    
-    <div class="step" id="step1">●</div>
-    <div class="line" id="line1"></div>
-
-    <div class="step" id="step2">●</div>
-    <div class="line" id="line2"></div>
-
-    <div class="step" id="step3">●</div>
-    <div class="line" id="line3"></div>
-
-    <div class="step" id="step4">●</div>
-
-  </div>
-
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px;">
-    <span>Queue</span>
-    <span>Prep</span>
-    <span>Cook</span>
-    <span>Ready</span>
-  </div>
-
-</div>
-<div id="eta"></div>
 
 <script>
+
+let hasAnimated = false;
 
 let params = new URLSearchParams(window.location.search);
 let orderNumber = params.get("order") || localStorage.getItem("currentOrder");
@@ -129,9 +190,16 @@ function startTracking(){
         let found = data.orders.find(o => String(o.orderNumber) === String(orderNumber));
         if(!found) return;
 
-        let status = found.orderStatus;
+let status = found.orderStatus;
 
-        function updateProgress(stage){
+
+let text = "";
+let eta = "";
+
+let created = new Date(found.createdAt || Date.now()).getTime();
+let elapsed = Math.floor((Date.now() - created)/1000);
+
+function updateProgress(stage){
 
   const steps = [
     document.getElementById("step1"),
@@ -147,44 +215,62 @@ function startTracking(){
   ];
 
   // reset
-  steps.forEach(s => s.classList.remove("active"));
-  lines.forEach(l => l.classList.remove("active"));
+  steps.forEach(s => {
+  s.classList.remove("active","current");
+});
+lines.forEach(l => l.classList.remove("active"));
 
-  // activate
-  for(let i=0;i<=stage;i++){
-    if(steps[i]) steps[i].classList.add("active");
-    if(lines[i-1]) lines[i-1].classList.add("active");
-  }
+for(let i=0;i<=stage;i++){
+  if(steps[i]) steps[i].classList.add("active");
+  if(lines[i-1]) lines[i-1].classList.add("active");
 }
 
-        let text = "";
-       if(status==="Pending"){
+if(steps[stage]){
+  steps[stage].classList.add("current");
+}
+
+}
+
+if(status==="Pending"){
   text="Queued 🍟";
+
+  let total = 180;
+  let remaining = Math.max(0, total - elapsed);
+
+  eta = "⏳ Ready in " + Math.ceil(remaining/60) + " min";
   updateProgress(0);
 }
-else if(status==="Cooking"){
-
-  let created = new Date(found.createdAt || (Date.now()-60000)).getTime();
-  let elapsed = (Date.now() - created)/1000;
+  else if(status==="Cooking"){
 
   if(elapsed < 60){
     text="Preparing 👨‍🍳";
+    eta="🔥 Starting fryer...";
     updateProgress(1);
   } else {
     text="Cooking 🔥🔥🔥";
+
+    let total = 300;
+    let remaining = Math.max(0, total - elapsed);
+
+    eta = "🍗 Almost ready in " + Math.ceil(remaining/60) + " min";
     updateProgress(2);
   }
 }
 else if(status==="Ready"){
   text="🔥 Ready to Eat! 🍗";
+  eta="Ready to collect your order";
+
   updateProgress(3);
 
-  document.body.style.background = "#fff"; // 提亮
+  document.body.style.background = "#fff";
 
-  let card = document.querySelector("div[style*='max-width']");
-  if(card){
-    card.style.transform = "scale(1.03)";
-    card.style.boxShadow = "0 20px 40px rgba(0,0,0,0.15)";
+  if(!hasAnimated){
+    let card = document.querySelector(".card");
+    if(card){
+      card.style.transform = "scale(1.03)";
+      card.style.boxShadow = "0 20px 40px rgba(0,0,0,0.15)";
+    }
+    hasAnimated = true;
   }
 }
 
