@@ -855,6 +855,7 @@ function renderOrder(){
 function submitOrder(){
   let btn = document.getElementById("submitBtn");
   let receipt = document.getElementById("receipt");
+  
 
   let realMode = document.getElementById("deliveryBtn").classList.contains("active")
   ? "delivery"
@@ -878,7 +879,8 @@ btn.disabled = true;
 btn.classList.add("loading");
 btn.innerHTML = '<span class="spinner"></span> Processing';
 
-  let orderNumber = "DUNNO-" + Date.now();
+  
+  let orderNumber = generateShortOrderNumber();
   localStorage.setItem("currentOrder", orderNumber);
 
  let url = "https://script.google.com/macros/s/AKfycbzl9COfgZxa0DoTKkoaeFrkIZ5cYmBHvEIrKBBupFt8kpmKNz3s5klFDOPYJnNIWKAzRA/exec";
@@ -1017,6 +1019,16 @@ if(e) e.innerText = eta;
       });
 
   },4000);
+}
+
+function generateShortOrderNumber(){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const letter = letters[Math.floor(Math.random()*letters.length)];
+
+  const timePart = Date.now().toString().slice(-3);
+  const randomPart = Math.floor(Math.random()*10);
+
+  return letter + timePart + randomPart;
 }
 
   function resetSubmitBtn(){
